@@ -493,7 +493,7 @@ function renderRadarChart(containerId, percentages) {
   const dataPts = axes.map((axis, i) => pointFor(i, percentages[axis] || 0).join(",")).join(" ");
 
   el.innerHTML = `
-    <svg viewBox="0 0 200 200" width="100%" height="auto" style="max-width:340px;display:block;margin:0 auto;">
+    <svg viewBox="0 0 200 200" style="width:100%;max-width:340px;height:auto;display:block;margin:0 auto;">
       ${gridRings}
       ${axisLines}
       <polygon points="${dataPts}" fill="#c9a24b" fill-opacity="0.35" stroke="#0e3b2e" stroke-width="2"/>
