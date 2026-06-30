@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>التسجيل | بوصلة الشخصية</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  .pkg-select-inline { margin-bottom: 20px; }
+  .pkg-select-inline h3 { color: var(--green-dark); margin-top: 0; }
+  .pkg-btn-group { display: flex; flex-direction: column; gap: 10px; }
+  .pkg-btn-group .btn { text-align: right; border-radius: 10px; padding: 14px 18px; }
+  .pkg-btn-group .btn strong { display: block; font-size: 1rem; }
+  .pkg-btn-group .btn span { font-size: .85rem; opacity: .8; }
+  #no-pkg-msg { display: none; }
+  #reg-main { display: none; }
+</style>
 </head>
 <body>
 
@@ -30,35 +40,49 @@
 <main class="form-page">
   <div class="container" style="max-width:560px;">
 
-    <div class="summary-box">
-      <h3>الباقة المختارة</h3>
-      <div class="summary-row"><strong>الاسم</strong> <span id="pkg-name">—</span></div>
-      <div class="summary-row"><strong>السعر</strong> <span id="pkg-price">—</span></div>
+    <!-- إذا لم تُختر باقة: اختيار مدمج بدون نافذة منبثقة -->
+    <div id="no-pkg-msg">
+      <div class="form-card pkg-select-inline">
+        <h3>اختر الباقة أولًا</h3>
+        <div class="pkg-btn-group" id="pkg-btns"></div>
+      </div>
     </div>
 
-    <div class="form-card">
-      <form id="register-form" novalidate>
-        <div class="form-group">
-          <label for="full-name">الاسم الكامل</label>
-          <input type="text" id="full-name" required>
-          <div class="field-error">يرجى إدخال الاسم الكامل</div>
+    <!-- النموذج الرئيسي -->
+    <div id="reg-main">
+      <div class="summary-box">
+        <h3>الباقة المختارة</h3>
+        <div class="summary-row"><strong>الاسم</strong> <span id="pkg-name">—</span></div>
+        <div class="summary-row"><strong>السعر</strong> <span id="pkg-price">—</span></div>
+        <div style="margin-top:10px;">
+          <a href="index.html" style="font-size:.85rem;color:var(--text-muted);">تغيير الباقة</a>
         </div>
-        <div class="form-group">
-          <label for="email">البريد الإلكتروني</label>
-          <input type="email" id="email" required>
-          <div class="field-error">يرجى إدخال بريد إلكتروني صحيح</div>
-        </div>
-        <div class="form-group">
-          <label for="phone">رقم الجوال</label>
-          <input type="tel" id="phone" required placeholder="05xxxxxxxx">
-          <div class="field-error">يرجى إدخال رقم جوال صحيح</div>
-        </div>
-        <div class="form-group">
-          <label for="age">العمر (اختياري)</label>
-          <input type="number" id="age" min="10" max="100">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">المتابعة إلى الدفع</button>
-      </form>
+      </div>
+
+      <div class="form-card">
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label for="full-name">الاسم الكامل</label>
+            <input type="text" id="full-name" autocomplete="name" required>
+            <div class="field-error">يرجى إدخال الاسم الكامل (3 أحرف على الأقل)</div>
+          </div>
+          <div class="form-group">
+            <label for="email">البريد الإلكتروني</label>
+            <input type="email" id="email" autocomplete="email" required>
+            <div class="field-error">يرجى إدخال بريد إلكتروني صحيح</div>
+          </div>
+          <div class="form-group">
+            <label for="phone">رقم الجوال</label>
+            <input type="tel" id="phone" autocomplete="tel" required placeholder="05xxxxxxxx">
+            <div class="field-error">يرجى إدخال رقم جوال صحيح يبدأ بـ 05</div>
+          </div>
+          <div class="form-group">
+            <label for="age">العمر (اختياري)</label>
+            <input type="number" id="age" min="10" max="100">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">المتابعة إلى الدفع</button>
+        </form>
+      </div>
     </div>
 
   </div>
@@ -73,22 +97,30 @@
   let selectedPkgId = readFromStorage(STORAGE_KEYS.selectedPackage);
   let pkg = PACKAGES[selectedPkgId];
 
-  // إذا لم تُختر باقة بعد، افتح نافذة الاختيار بدل الإعادة المفاجئة
   if (!pkg) {
-    const pkgIds = Object.keys(PACKAGES);
-    const names = pkgIds.map(id => `${PACKAGES[id].name} — ${PACKAGES[id].price} ريال`).join('\n');
-    const choice = prompt(`لم تختر باقة بعد. اختر رقم الباقة:\n1. ${names.split('\n')[0]}\n2. ${names.split('\n')[1]}\n3. ${names.split('\n')[2]}\n\nاكتب 1 أو 2 أو 3:`);
-    const map = { '1': 'short', '2': 'long', '3': 'advanced' };
-    if (map[choice]) {
-      selectedPkgId = map[choice];
-      saveToStorage(STORAGE_KEYS.selectedPackage, selectedPkgId);
-      pkg = PACKAGES[selectedPkgId];
-    } else {
-      window.location.href = "index.html";
-    }
+    // لم تُختر باقة — اعرض الاختيار مباشرة في الصفحة بدون prompt
+    document.getElementById('no-pkg-msg').style.display = 'block';
+    const btnGroup = document.getElementById('pkg-btns');
+    Object.values(PACKAGES).forEach(p => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline';
+      btn.innerHTML = `<strong>${p.name}</strong><span>${p.price} ريال — ${p.tagline}</span>`;
+      btn.addEventListener('click', () => {
+        saveToStorage(STORAGE_KEYS.selectedPackage, p.id);
+        selectedPkgId = p.id;
+        pkg = PACKAGES[p.id];
+        showForm();
+      });
+      btnGroup.appendChild(btn);
+    });
+  } else {
+    showForm();
   }
 
-  if (pkg) {
+  function showForm() {
+    document.getElementById('no-pkg-msg').style.display = 'none';
+    document.getElementById('reg-main').style.display = 'block';
     document.getElementById('pkg-name').textContent = pkg.name;
     document.getElementById('pkg-price').textContent = pkg.price + ' ريال';
   }
@@ -97,9 +129,9 @@
     e.preventDefault();
 
     const fullName = document.getElementById('full-name');
-    const email = document.getElementById('email');
-    const phone = document.getElementById('phone');
-    const age = document.getElementById('age');
+    const email    = document.getElementById('email');
+    const phone    = document.getElementById('phone');
+    const age      = document.getElementById('age');
 
     let valid = true;
     [fullName, email, phone].forEach(f => f.nextElementSibling.style.display = 'none');
@@ -121,14 +153,12 @@
 
     if (!valid) return;
 
-    const customer = {
+    saveToStorage(STORAGE_KEYS.customer, {
       fullName: fullName.value.trim(),
-      email: email.value.trim(),
-      phone: phone.value.trim(),
-      age: age.value ? Number(age.value) : null
-    };
-
-    saveToStorage(STORAGE_KEYS.customer, customer);
+      email:    email.value.trim(),
+      phone:    phone.value.trim(),
+      age:      age.value ? Number(age.value) : null
+    });
     window.location.href = "payment.html";
   });
 </script>
