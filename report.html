@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقريرك الشخصي | بوصلة الشخصية</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="report-page">
+
+<header class="site-header no-print">
+  <div class="container">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="#c9a24b" stroke-width="2"/>
+        <path d="M20 8 L24 20 L20 32 L16 20 Z" fill="#c9a24b"/>
+      </svg>
+      بوصلة الشخصية
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">الرئيسية</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container" style="max-width:760px;">
+    <div id="report-content"></div>
+
+    <div class="report-actions no-print">
+      <button class="btn btn-primary btn-block" onclick="window.print()">تحميل التقرير PDF</button>
+      <button class="btn btn-outline btn-block" onclick="sendReportByEmail()">إرسال التقرير عبر البريد</button>
+    </div>
+
+    <div class="notice-box no-print">
+      هذا التقرير لأغراض التطوير الذاتي وفهم السلوك، ولا يعتبر تشخيصًا نفسيًا أو طبيًا.
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer no-print">
+  <div class="container">© بوصلة الشخصية — جميع الحقوق محفوظة.</div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  const result = readFromStorage(STORAGE_KEYS.result);
+  const customer = readFromStorage(STORAGE_KEYS.customer);
+  const pkgId = readFromStorage(STORAGE_KEYS.selectedPackage);
+  const pkg = PACKAGES[pkgId];
+
+  if (!result || !customer || !pkg) {
+    window.location.href = "index.html";
+  }
+
+  const primary = result.primary;
+  const secondary = result.secondary;
+  const pPrimary = PATTERN_CONTENT[primary];
+  const pSecondary = PATTERN_CONTENT[secondary];
+
+  let html = '';
+
+  html += `
+    <div class="report-cover">
+      <h1>تقرير ${pkg.name}</h1>
+      <p>إعداد خاص لـ: ${customer.fullName}</p>
+      <div class="result-pattern">${result.compound}</div>
+      <p>${DISC_INFO[primary].name} + ${DISC_INFO[secondary].name}</p>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>درجات نمطك</h2>
+      <div id="radar-box"></div>
+      <div class="disc-bars">
+        ${['D','I','S','C'].map(k => `
+          <div class="disc-bar-row">
+            <div class="disc-bar-label"><span>${k} - ${DISC_INFO[k].name}</span><span>${result.percentages[k]}%</span></div>
+            <div class="disc-bar-track"><div class="disc-bar-fill fill-${k}" style="width:${result.percentages[k]}%"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>ملخص الشخصية</h2>
+      <p>${pPrimary.summary}</p>
+      <p>${getCompoundExplanation(primary, secondary)}</p>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>نقاط القوة</h2>
+      <ul>${pPrimary.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>التحديات</h2>
+      <ul>${pPrimary.challenges.map(s => `<li>${s}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>أسلوب التواصل</h2>
+      <p>${pPrimary.communication}</p>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>نصيحة عملية</h2>
+      <p>ابدأ بخطوة صغيرة كل يوم لتطوير جانب واحد من جوانب نموك، بدل محاولة تغيير كل شيء دفعة واحدة.</p>
+    </div>
+  `;
+
+  html += `
+    <div class="report-section">
+      <h2>خطة 7 أيام</h2>
+      <ul>${get7DayPlan(primary).map(d => `<li>${d}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  // ===== الباقة الطويلة والمتقدمة =====
+  if (pkgId === 'long' || pkgId === 'advanced') {
+    html += `
+      <div class="report-section">
+        <h2>تحليل النمط الثانوي (${DISC_INFO[secondary].name})</h2>
+        <p>${pSecondary.summary}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>نقاط القوة والتحديات بالتفصيل</h2>
+        <h3>قوة إضافية من النمط الثانوي</h3>
+        <ul>${pSecondary.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+        <h3>تحديات إضافية من النمط الثانوي</h3>
+        <ul>${pSecondary.challenges.map(s => `<li>${s}</li>`).join('')}</ul>
+      </div>
+
+      <div class="report-section">
+        <h2>أسلوب العمل</h2>
+        <p>${pPrimary.work}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>أسلوب العلاقات</h2>
+        <p>${pPrimary.relationships}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>أسلوب التعامل مع الضغط</h2>
+        <p>${pPrimary.pressure}</p>
+      </div>
+
+      <div class="report-section">
+        <h2>المحفزات وما يضعف الطاقة</h2>
+        <h3>المحفزات</h3>
+        <ul>${pPrimary.motivators.map(s => `<li>${s}</li>`).join('')}</ul>
+        <h3>ما يضعف الطاقة</h3>
+        <ul>${pPrimary.drains.map(s => `<li>${s}</li>`).join('')}</ul>
+      </div>
+
+      <div class="report-section">
+        <h2>خطة تحسين 30 يوم</h2>
+        <ul>${get30DayPlan(primary, secondary).map(w => `<li>${w}</li>`).join('')}</ul>
+      </div>
+
+      <div class="report-section">
+        <h2>توصيات ختامية</h2>
+        <p>استثمر نقاط قوتك بوعي، وتعامل مع تحدياتك كفرص للنمو لا كعيوب. الفهم الجيد لنمطك هو نقطة البداية لتطوير حقيقي ومستمر.</p>
+      </div>
+    `;
+  }
+
+  // ===== الباقة المتقدمة فقط =====
+  if (pkgId === 'advanced') {
+    html += `
+      <div class="report-section">
+        <h2>شرح أنماط DISC الأربعة</h2>
+        ${Object.keys(DISC_INFO).map(k => `<p><strong>${k} - ${DISC_INFO[k].name}:</strong> ${DISC_INFO[k].short}</p>`).join('')}
+      </div>
+
+      <div class="report-section">
+        <h2>خريطة السلوك — 12 ميل سلوكي</h2>
+        ${TWELVE_TRAITS.map(t => `<p><strong>${t}:</strong> ${getTraitDescription(primary, t)}</p>`).join('')}
+      </div>
+
+      <div class="report-section">
+        <h2>كيف يتعامل الآخرون معك</h2>
+        <p>غالبًا ما يراك من حولك شخصًا واضح الهوية السلوكية، وقد يميلون للتعامل معك وفق توقعاتهم لنمط ${DISC_INFO[primary].name}، لذلك من المفيد أن توضح احتياجاتك بصراحة لتقليل سوء الفهم.</p>
+      </div>
+
+      <div class="report-section">
+        <h2>كيف تتعامل مع كل نمط</h2>
+        ${Object.keys(DISC_INFO).filter(k => k !== primary).map(k => `
+          <p><strong>عند التعامل مع نمط ${k} - ${DISC_INFO[k].name}:</strong> احرص على مراعاة أن ${DISC_INFO[k].short}، وتكيّف أسلوبك معه دون أن تفقد طبيعتك.</p>
+        `).join('')}
+      </div>
+
+      <div class="report-section">
+        <h2>تمارين تطبيقية</h2>
+        <ul>
+          <li>اكتب موقفًا واجهته هذا الأسبوع وحلله وفق نمطك السلوكي</li>
+          <li>جرّب التعامل لمدة يوم كامل بأسلوب نمط مختلف عن نمطك</li>
+          <li>اطلب من شخص مقرب وصف شخصيتك وقارنه بنتيجتك</li>
+        </ul>
+      </div>
+
+      <div class="report-section">
+        <h2>ملخص تنفيذي</h2>
+        <p>نمطك الأساسي ${DISC_INFO[primary].name} (${result.percentages[primary]}%)، ونمطك الثانوي ${DISC_INFO[secondary].name} (${result.percentages[secondary]}%). أبرز قوتك: ${pPrimary.strengths[0]}. أبرز تحدٍّ: ${pPrimary.challenges[0]}. ركّز خلال الثلاثين يومًا القادمة على خطة التحسين المذكورة أعلاه.</p>
+      </div>
+    `;
+  }
+
+  document.getElementById('report-content').innerHTML = html;
+  renderRadarChart('radar-box', result.percentages);
+</script>
+</body>
+</html>

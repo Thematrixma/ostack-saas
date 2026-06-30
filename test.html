@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الاختبار | بوصلة الشخصية</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="test-header no-print">
+  <div class="container">
+    <div class="q-counter">
+      <span id="q-position">السؤال 1 من 48</span>
+      <span id="q-percent">2%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container" style="max-width:680px;">
+
+    <div id="test-area">
+      <div class="question-card">
+        <h2 id="q-text">جارٍ التحميل...</h2>
+        <div class="options-list" id="options-list"></div>
+      </div>
+
+      <div class="test-nav">
+        <button id="prev-btn" class="btn btn-outline">السابق</button>
+        <button id="next-btn" class="btn btn-primary" disabled>التالي</button>
+      </div>
+    </div>
+
+    <div id="result-area" style="display:none;">
+      <div class="question-card" style="text-align:center;">
+        <h2>اكتمل الاختبار 🎉</h2>
+        <p>جارٍ تجهيز تقريرك الشخصي...</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer no-print">
+  <div class="container">© بوصلة الشخصية — جميع الحقوق محفوظة.</div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  const pkgId = readFromStorage(STORAGE_KEYS.selectedPackage);
+  const payment = readFromStorage(STORAGE_KEYS.payment);
+
+  if (!pkgId || !payment) {
+    window.location.href = "index.html";
+  }
+
+  let currentIndex = 0;
+  let answers = readFromStorage(STORAGE_KEYS.answers) || new Array(QUESTIONS.length).fill(null);
+
+  const qText = document.getElementById('q-text');
+  const optionsList = document.getElementById('options-list');
+  const qPosition = document.getElementById('q-position');
+  const qPercent = document.getElementById('q-percent');
+  const progressFill = document.getElementById('progress-fill');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  function renderQuestion(index) {
+    const question = QUESTIONS[index];
+    qText.textContent = question.text;
+    qPosition.textContent = `السؤال ${index + 1} من ${QUESTIONS.length}`;
+    const percent = Math.round(((index + 1) / QUESTIONS.length) * 100);
+    qPercent.textContent = percent + '%';
+    progressFill.style.width = percent + '%';
+
+    optionsList.innerHTML = '';
+    question.options.forEach((opt, optIndex) => {
+      const div = document.createElement('div');
+      div.className = 'option-item';
+      if (answers[index] === opt.type) div.classList.add('selected');
+      div.innerHTML = `<input type="radio" name="opt" id="opt-${optIndex}"> ${opt.text}`;
+      div.addEventListener('click', () => {
+        answers[index] = opt.type;
+        saveToStorage(STORAGE_KEYS.answers, answers);
+        document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        nextBtn.disabled = false;
+      });
+      optionsList.appendChild(div);
+    });
+
+    nextBtn.disabled = !answers[index];
+    prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = index === QUESTIONS.length - 1 ? 'عرض النتيجة' : 'التالي';
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      renderQuestion(currentIndex);
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentIndex < QUESTIONS.length - 1) {
+      currentIndex++;
+      renderQuestion(currentIndex);
+    } else {
+      finishTest();
+    }
+  });
+
+  function finishTest() {
+    const result = calculateResult(answers);
+    saveToStorage(STORAGE_KEYS.result, result);
+
+    const customer = readFromStorage(STORAGE_KEYS.customer);
+    if (customer) {
+      sendToGoogleSheets({
+        name: customer.fullName,
+        email: customer.email,
+        phone: customer.phone,
+        age: customer.age,
+        package: PACKAGES[pkgId].name,
+        price: PACKAGES[pkgId].price,
+        date: new Date().toISOString(),
+        finalPattern: result.compound,
+        scoreD: result.percentages.D,
+        scoreI: result.percentages.I,
+        scoreS: result.percentages.S,
+        scoreC: result.percentages.C
+      });
+    }
+
+    window.location.href = "report.html";
+  }
+
+  renderQuestion(currentIndex);
+</script>
+</body>
+</html>
