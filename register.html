@@ -70,12 +70,25 @@
 
 <script src="app.js"></script>
 <script>
-  const selectedPkgId = readFromStorage(STORAGE_KEYS.selectedPackage);
-  const pkg = PACKAGES[selectedPkgId];
+  let selectedPkgId = readFromStorage(STORAGE_KEYS.selectedPackage);
+  let pkg = PACKAGES[selectedPkgId];
 
+  // إذا لم تُختر باقة بعد، افتح نافذة الاختيار بدل الإعادة المفاجئة
   if (!pkg) {
-    window.location.href = "index.html";
-  } else {
+    const pkgIds = Object.keys(PACKAGES);
+    const names = pkgIds.map(id => `${PACKAGES[id].name} — ${PACKAGES[id].price} ريال`).join('\n');
+    const choice = prompt(`لم تختر باقة بعد. اختر رقم الباقة:\n1. ${names.split('\n')[0]}\n2. ${names.split('\n')[1]}\n3. ${names.split('\n')[2]}\n\nاكتب 1 أو 2 أو 3:`);
+    const map = { '1': 'short', '2': 'long', '3': 'advanced' };
+    if (map[choice]) {
+      selectedPkgId = map[choice];
+      saveToStorage(STORAGE_KEYS.selectedPackage, selectedPkgId);
+      pkg = PACKAGES[selectedPkgId];
+    } else {
+      window.location.href = "index.html";
+    }
+  }
+
+  if (pkg) {
     document.getElementById('pkg-name').textContent = pkg.name;
     document.getElementById('pkg-price').textContent = pkg.price + ' ريال';
   }
