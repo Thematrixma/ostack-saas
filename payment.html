@@ -76,7 +76,7 @@
   const customer = readFromStorage(STORAGE_KEYS.customer);
 
   if (!pkg || !customer) {
-    window.location.href = "index.html";
+    window.location.href = buildUrl('index.html', {});
   } else {
     document.getElementById('o-pkg').textContent = pkg.name;
     document.getElementById('o-price').textContent = pkg.price + ' ريال';
@@ -116,7 +116,8 @@
       date: new Date().toISOString()
     });
 
-    window.location.href = "test.html";
+    const custParam = encodeURIComponent(JSON.stringify(customer));
+    window.location.href = buildUrl('test.html', { pkg: pkgId, cust: custParam, paid: method });
   });
 </script>
 </body>

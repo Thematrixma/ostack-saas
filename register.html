@@ -153,13 +153,17 @@
 
     if (!valid) return;
 
-    saveToStorage(STORAGE_KEYS.customer, {
+    const customer = {
       fullName: fullName.value.trim(),
       email:    email.value.trim(),
       phone:    phone.value.trim(),
       age:      age.value ? Number(age.value) : null
+    };
+    saveToStorage(STORAGE_KEYS.customer, customer);
+    window.location.href = buildUrl('payment.html', {
+      pkg:  selectedPkgId,
+      cust: encodeURIComponent(JSON.stringify(customer))
     });
-    window.location.href = "payment.html";
   });
 </script>
 </body>

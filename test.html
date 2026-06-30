@@ -118,13 +118,13 @@
     const result = calculateResult(answers);
     saveToStorage(STORAGE_KEYS.result, result);
 
-    const customer = readFromStorage(STORAGE_KEYS.customer);
-    if (customer) {
+    const customer2 = readFromStorage(STORAGE_KEYS.customer);
+    if (customer2) {
       sendToGoogleSheets({
-        name: customer.fullName,
-        email: customer.email,
-        phone: customer.phone,
-        age: customer.age,
+        name: customer2.fullName,
+        email: customer2.email,
+        phone: customer2.phone,
+        age: customer2.age,
         package: PACKAGES[pkgId].name,
         price: PACKAGES[pkgId].price,
         date: new Date().toISOString(),
@@ -136,7 +136,12 @@
       });
     }
 
-    window.location.href = "report.html";
+    const customer = readFromStorage(STORAGE_KEYS.customer);
+    window.location.href = buildUrl('report.html', {
+      pkg: pkgId,
+      res: encodeURIComponent(JSON.stringify(result)),
+      cust: encodeURIComponent(JSON.stringify(customer || {}))
+    });
   }
 
   renderQuestion(currentIndex);

@@ -380,7 +380,8 @@ function q(text, a1, t1, a2, t2, a3, t3, a4, t4) {
 }
 
 /* =========================================================
-   أدوات localStorage
+   أدوات التخزين — تدعم localStorage + URL params كبديل
+   (يعمل مع بروتوكول file:// في Chrome و Edge)
    ========================================================= */
 const STORAGE_KEYS = {
   selectedPackage: "bawsala_selected_package",
@@ -390,17 +391,46 @@ const STORAGE_KEYS = {
   result: "bawsala_test_result"
 };
 
+/* تخزين مؤقت في الذاكرة كاحتياط */
+const _mem = {};
+
 function saveToStorage(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  _mem[key] = value;
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
 }
+
 function readFromStorage(key) {
-  const raw = localStorage.getItem(key);
-  return raw ? JSON.parse(raw) : null;
+  if (_mem[key] !== undefined) return _mem[key];
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) { const v = JSON.parse(raw); _mem[key] = v; return v; }
+  } catch(e) {}
+  return null;
+}
+
+/* قراءة من URL params عند تحميل الصفحة */
+function loadStateFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('pkg'))  saveToStorage(STORAGE_KEYS.selectedPackage, p.get('pkg'));
+  if (p.get('cust')) {
+    try { saveToStorage(STORAGE_KEYS.customer, JSON.parse(decodeURIComponent(p.get('cust')))); } catch(e) {}
+  }
+  if (p.get('paid')) saveToStorage(STORAGE_KEYS.payment, { status: 'paid_demo', method: p.get('paid') });
+  if (p.get('res')) {
+    try { saveToStorage(STORAGE_KEYS.result, JSON.parse(decodeURIComponent(p.get('res')))); } catch(e) {}
+  }
+}
+loadStateFromUrl();
+
+/* بناء URL مع البيانات المطلوبة */
+function buildUrl(page, extra) {
+  const params = new URLSearchParams(extra || {});
+  return page + (params.toString() ? '?' + params.toString() : '');
 }
 
 function selectPackage(packageId) {
   saveToStorage(STORAGE_KEYS.selectedPackage, packageId);
-  window.location.href = "register.html";
+  window.location.href = buildUrl('register.html', { pkg: packageId });
 }
 
 /* =========================================================
